@@ -42,7 +42,8 @@ class QLearningAgent(ReinforcementAgent):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
 
-        "*** YOUR CODE HERE ***"
+        self.q_vals = util.Counter() # with (state, action) keys
+
 
     def getQValue(self, state, action):
         """
@@ -50,8 +51,8 @@ class QLearningAgent(ReinforcementAgent):
           Should return 0.0 if we have never seen a state
           or the Q node value otherwise
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        return self.q_vals[(state, action)]
 
 
     def computeValueFromQValues(self, state):
@@ -61,8 +62,19 @@ class QLearningAgent(ReinforcementAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return a value of 0.0.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actionsFromState = self.getLegalActions(state)
+
+        # Return 0.0 if terminal state
+        if not actionsFromState:
+            return 0.0
+
+        values = []
+        # Get the q values of the state
+        for action in actionsFromState:
+            values.append(self.getQValue(state, action))
+
+        # Return the max q value
+        return max(values)
 
     def computeActionFromQValues(self, state):
         """
@@ -70,8 +82,27 @@ class QLearningAgent(ReinforcementAgent):
           are no legal actions, which is the case at the terminal state,
           you should return None.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actionsFromState = self.getLegalActions(state)
+
+        # Return None if terminal state
+        if not actionsFromState:
+            return None
+
+        # Create dictionary of actions to q-values
+        action_qvals_dict = util.Counter()
+        for action in actionsFromState:
+            action_qvals_dict[action] = self.getQValue(state, action)
+
+        # Get the max action
+        max_act = action_qvals_dict.argMax()
+
+        # Get random action between tiebreakers
+        tied_actions = []
+        for act, qval in action_qvals_dict.items():
+            if action_qvals_dict[act] == action_qvals_dict[max_act]:
+                tied_actions.append(act)
+
+        return random.choice(tied_actions)
 
     def getAction(self, state):
         """
@@ -101,8 +132,9 @@ class QLearningAgent(ReinforcementAgent):
           NOTE: You should never call this function,
           it will be called on your behalf
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # referenced RLII page 11
+        sample = reward + (self.discount*self.getQValue(nextState, self.computeActionFromQValues(nextState)))
+        self.q_vals[(state, action)] = (1-self.alpha)*self.getQValue(state, action) + self.alpha*sample
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
