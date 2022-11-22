@@ -10,7 +10,8 @@
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
-import featureExtractors
+
+
 from game import *
 from learningAgents import ReinforcementAgent
 from featureExtractors import *
@@ -191,7 +192,6 @@ class ApproximateQAgent(PacmanQAgent):
         self.featExtractor = util.lookup(extractor, globals())()
         PacmanQAgent.__init__(self, **args)
         self.weights = util.Counter()
-        # self.q_vals = util.Counter()
 
     def getWeights(self):
         return self.weights
@@ -201,28 +201,22 @@ class ApproximateQAgent(PacmanQAgent):
           Should return Q(state,action) = w * featureVector
           where * is the dotProduct operator
         """
-        "*** YOUR CODE HERE ***"
-        # print("weights*feats: " + str(self.weights * self.featExtractor.getFeatures(state, action)) + "\n")
-        # print("feats: " + str(self.featExtractor.getFeatures(state, action)))
-        s = 0
-        diction = self.featExtractor.getFeatures(state, action)
-        for el in diction.keys():
-            s += self.weights[el]*diction[el]
-
-        return s
+        q_val = 0
+        feat_dict = self.featExtractor.getFeatures(state, action)
+        for feature in feat_dict.keys():
+            q_val += (self.weights[feature] * feat_dict[feature])
+        return q_val
 
     def update(self, state, action, nextState, reward):
         """
            Should update your weights based on transition
         """
-        "*** YOUR CODE HERE ***"
-        difference = (reward + (self.discount*self.q_vals[(nextState, self.computeActionFromQValues(nextState))])) - self.q_vals[(state, action)]
+        difference = (reward + (self.discount*self.getValue(nextState))) - self.getQValue(state, action)
 
-        self.q_vals[(state, action)] = self.q_vals[(state, action)] + (self.alpha * difference)
-
-        diction = self.featExtractor.getFeatures(state, action)
-        for weightKey in self.weights.keys():
-            self.weights[weightKey] = self.weights[weightKey]+self.alpha*difference*diction[weightKey]
+        feats_dict = self.featExtractor.getFeatures(state, action)
+        # Update the weights
+        for feature in feats_dict.keys():
+            self.weights[feature] = self.weights[feature] + self.alpha*difference*feats_dict[feature]
 
     def final(self, state):
         "Called at the end of each game."
@@ -233,4 +227,4 @@ class ApproximateQAgent(PacmanQAgent):
         if self.episodesSoFar == self.numTraining:
             # you might want to print your weights here for debugging
             "*** YOUR CODE HERE ***"
-            # print(self.weights)
+            pass
